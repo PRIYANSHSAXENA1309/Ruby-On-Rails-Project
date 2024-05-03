@@ -1,0 +1,149 @@
+<h1>Matrix Calculator</h1>
+
+<%= form_tag(multiply_path, method: "post", remote: true, id: "matrix-form") do %>
+
+  <h2>Matrix A</h2>
+  <div>
+    <span>Rows:</span>
+    <%= number_field_tag(:A_rows, 2, min: 1, onchange: "updateMatrix('A')") %>
+    <button type="button" onclick="decrementValue('A_rows')">-</button>
+    <button type="button" onclick="incrementValue('A_rows')">+</button>
+  </div>
+  <br>
+  <div>
+    <span>Columns:</span>
+    <%= number_field_tag(:A_columns, 2, min: 1, onchange: "updateMatrix('A')") %>
+    <button type="button" onclick="decrementValue('A_columns')">-</button>
+    <button type="button" onclick="incrementValue('A_columns')">+</button>
+  </div>
+
+  <h2>Matrix B</h2>
+  <div>
+    <span>Rows:</span>
+    <%= number_field_tag(:B_rows, 2, min: 1, onchange: "updateMatrix('B')") %>
+    <button type="button" onclick="decrementValue('B_rows')">-</button>
+    <button type="button" onclick="incrementValue('B_rows')">+</button>
+  </div>
+  <br>
+  <div>
+    <span>Columns:</span>
+    <%= number_field_tag(:B_columns, 2, min: 1, onchange: "updateMatrix('B')") %>
+    <button type="button" onclick="decrementValue('B_columns')">-</button>
+    <button type="button" onclick="incrementValue('B_columns')">+</button>
+  </div>
+
+  <h2>Enter Matrix Values</h2>
+
+  <h3>Matrix A</h3>
+  <div id="matrixAValues"></div>
+  <div id="matrixA"></div>
+
+  <h3>Matrix B</h3>
+  <div id="matrixBValues"></div>
+  <div id="matrixB"></div>
+
+  <br>
+  <%= submit_tag("Calculate", id: "calculate-button") %>
+<% end %>
+<h2> Result </h2>
+<div id="result"></div>
+
+<script>
+  function incrementValue(elementId) {
+    var element = document.getElementById(elementId);
+    element.stepUp();
+    updateMatrix(elementId.charAt(0));
+  }
+
+  function decrementValue(elementId) {
+    var element = document.getElementById(elementId);
+    element.stepDown();
+    updateMatrix(elementId.charAt(0));
+  }
+
+  function updateMatrix(matrixId) {
+    displayMatrixStructure(matrixId);
+    displayMatrixValues(matrixId);
+  }
+
+  function displayMatrixStructure(matrixId) {
+    var rows = parseInt(document.getElementById(matrixId + "_rows").value);
+    var columns = parseInt(document.getElementById(matrixId + "_columns").value);
+    var matrixDiv = document.getElementById("matrix" + matrixId);
+    matrixDiv.innerHTML = "";
+    for (var i = 0; i < rows; i++) {
+      var rowDiv = document.createElement("div");
+      for (var j = 0; j < columns; j++) {
+        var cellDiv = document.createElement("div");
+        cellDiv.innerHTML = "";
+        rowDiv.appendChild(cellDiv);
+      }
+      matrixDiv.appendChild(rowDiv);
+    }
+  }
+
+  function displayMatrixValues(matrixId) {
+    var rows = parseInt(document.getElementById(matrixId + "_rows").value);
+    var columns = parseInt(document.getElementById(matrixId + "_columns").value);
+    var valuesDiv = document.getElementById("matrix" + matrixId + "Values");
+    valuesDiv.innerHTML = "";
+
+    var existingValues = document.getElementsByName("matrix" + matrixId + "_data[]");
+
+    for (var i = 0; i < rows; i++) {
+      for (var j = 0; j < columns; j++) {
+        var inputField = document.createElement("input");
+        inputField.type = "number";
+        inputField.name = "matrix" + matrixId + "_data[]";
+
+        if (existingValues.length > (i * columns + j)) {
+          inputField.value = existingValues[i * columns + j].value;
+        } else {
+          inputField.value = "0";
+        }
+
+        valuesDiv.appendChild(inputField);
+      }
+      valuesDiv.appendChild(document.createElement("br"));
+    }
+  }
+
+  displayMatrixValues("A");
+  displayMatrixValues("B");
+
+  document.getElementById("A_rows").addEventListener("change", function() {
+    displayMatrixValues("A");
+  });
+
+  document.getElementById("A_columns").addEventListener("change", function() {
+    displayMatrixValues("A");
+  });
+
+  document.getElementById("B_rows").addEventListener("change", function() {
+    displayMatrixValues("B");
+  });
+
+  document.getElementById("B_columns").addEventListener("change", function() {
+    displayMatrixValues("B");
+  });
+
+  document.getElementById("matrix-form").addEventListener("ajax:success", function(event) {
+    var resultDiv = document.getElementById("result");
+    resultDiv.innerHTML = event.detail[0].result;
+  });
+
+  document.getElementById("matrix-form").addEventListener("submit", function(event) {
+    event.preventDefault();
+    var form = event.target;
+    var formData = new FormData(form);
+    var xhr = new XMLHttpRequest();
+    xhr.open(form.method, form.action, true);
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 400) {
+        var resultDiv = document.getElementById("result");
+        resultDiv.innerHTML = xhr.responseText;
+      }
+    };
+    xhr.send(formData);
+  });
+</script>
